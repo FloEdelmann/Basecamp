@@ -21,12 +21,29 @@ void WifiControl::begin(String essid, String password, String configured,
 	_wifiPassword = std::move(password);
 	_wifiAPName = "PixelTube_" + getHardwareMacAddress();
 
+	Preferences preferences;
+	preferences.begin("basecamp", true);
+
 	WiFi.onEvent(WiFiEvent);
 	if (_wifiConfigured == "True") {
 		operationMode_ = Mode::client;
 		DEBUG_PRINTLN("Wifi is configured");
-		DEBUG_PRINT("Connecting to ");
-		DEBUG_PRINTLN(_wifiEssid);
+		DEBUG_PRINTF("Connecting to %s\n", _wifiEssid.c_str());
+
+		IPAddress ip = IPAddress();
+		IPAddress gatewayIp = IPAddress();
+		IPAddress subnetMask = IPAddress();
+
+		if (ip.fromString(preferences.getString("ipaddress", "")) &&
+			gatewayIp.fromString(preferences.getString("gatewayIp", "")) &&
+			subnetMask.fromString(preferences.getString("subnetMask", ""))) {
+
+			DEBUG_PRINTF("Requesting static IP %s\n", ip.toString().c_str());
+			DEBUG_PRINTF("Gateway IP %s\n", gatewayIp.toString().c_str());
+			DEBUG_PRINTF("Subnet mask %s\n", subnetMask.toString().c_str());
+
+			WiFi.config(ip, gatewayIp, subnetMask);
+		}
 
 		WiFi.begin(_wifiEssid.c_str(), _wifiPassword.c_str());
 		WiFi.setHostname(hostname.c_str());
@@ -35,7 +52,7 @@ void WifiControl::begin(String essid, String password, String configured,
 	} else {
 		operationMode_ = Mode::accessPoint;
 		DEBUG_PRINTLN("Wifi is NOT configured");
-		DEBUG_PRINTF("Starting Wifi AP '%s'", _wifiAPName);
+		Serial.printf("Starting Wifi AP '%s'\n", _wifiAPName.c_str());
 
 		WiFi.mode(WIFI_AP_STA);
 		if (apSecret.length() > 0) {
@@ -77,10 +94,25 @@ void WifiControl::WiFiEvent(WiFiEvent_t event)
 	// In case somebody wants to know this..
 	DEBUG_PRINTF("[WiFi-event] event. Bootcounter is %d\n", bootCounter);
 	DEBUG_PRINTF("[WiFi-event] event: %d\n", event);
+
+	String ip;
+	String gatewayIp;
+	String subnetMask;
+
 	switch(event) {
 		case SYSTEM_EVENT_STA_GOT_IP:
-			DEBUG_PRINT("Wifi IP address: ");
-			DEBUG_PRINTLN(WiFi.localIP());
+			ip = WiFi.localIP().toString();
+			gatewayIp = WiFi.gatewayIP().toString();
+			subnetMask = WiFi.subnetMask().toString();
+
+			DEBUG_PRINTF("Wifi IP address: %s\n", ip.c_str());
+			DEBUG_PRINTF("Wifi gateway IP address: %s\n", gatewayIp.c_str());
+			DEBUG_PRINTF("Wifi subnet mask: %s\n", subnetMask.c_str());
+
+			preferences.putString("ipaddress", ip);
+			preferences.putString("gatewayIp", gatewayIp);
+			preferences.putString("subnetMask", subnetMask);
+
 			preferences.putUInt("bootcounter", 0);
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -91,6 +123,8 @@ void WifiControl::WiFiEvent(WiFiEvent_t event)
 			// INFO: Default = do nothing
 			break;
 	}
+
+	preferences.end();
 }
 
 namespace {

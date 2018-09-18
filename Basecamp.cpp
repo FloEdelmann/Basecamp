@@ -268,7 +268,7 @@ void Basecamp::checkResetReason()
 			// Save the configuration immediately
 			configuration.save();
 			// Reset the boot counter
-			preferences.putUInt("bootcounter", 0);
+			preferences.clear();
 			// Call the destructor for preferences so that all data is safely stored befor rebooting
 			preferences.end();
 			Serial.println("Resetting the WiFi configuration.");
@@ -281,7 +281,7 @@ void Basecamp::checkResetReason()
 			// Format the flash storage
 			SPIFFS.format();
 			// Reset the boot counter
-			preferences.putUInt("bootcounter", 0);
+			preferences.clear();
 			// Call the destructor for preferences so that all data is safely stored befor rebooting
 			preferences.end();
 			Serial.println("Rebooting.");
@@ -295,7 +295,7 @@ void Basecamp::checkResetReason()
 
 	// if the reset has been for any other cause, reset the counter
 	} else {
-		preferences.putUInt("bootcounter", 0);
+		preferences.clear();
 	};
 	// Call the destructor for preferences so that all data is safely stored
 	preferences.end();
