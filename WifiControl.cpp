@@ -19,7 +19,7 @@ void WifiControl::begin(String essid, String password, String configured,
 	String _wifiConfigured = std::move(configured);
 	_wifiEssid = std::move(essid);
 	_wifiPassword = std::move(password);
-	_wifiAPName = "ESP32_" + getHardwareMacAddress();
+	_wifiAPName = "PixelTube_" + getHardwareMacAddress();
 
 	WiFi.onEvent(WiFiEvent);
 	if (_wifiConfigured == "True") {
