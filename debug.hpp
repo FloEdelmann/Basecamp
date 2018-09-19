@@ -17,4 +17,9 @@
 #define DEBUG_PRINTF(x,y )
 #endif
 
+// fix VS Code's C/C++ IntelliSense
+#ifndef ESP32
+#define ESP32
+#endif
+
 #endif
