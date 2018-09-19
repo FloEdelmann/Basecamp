@@ -18,12 +18,7 @@
 #include "data.hpp"
 #include "Configuration.hpp"
 #include "WebInterface.hpp"
-
-#ifdef BASECAMP_USEDNS
-#ifdef DNSServer_h
 #include "CaptiveRequestHandler.hpp"
-#endif
-#endif
 
 class WebServer {
 	public:

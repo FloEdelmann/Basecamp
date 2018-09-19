@@ -16,10 +16,7 @@
 #endif
 
 #ifndef BASECAMP_NOWEB
-#ifdef BASECAMP_USEDNS
 #include <DNSServer.h>
-#endif
-
 #include "WebServer.hpp"
 #endif
 
@@ -70,13 +67,8 @@ class Basecamp
 #endif
 
 #ifndef BASECAMP_NOWEB
-
-#ifdef BASECAMP_USEDNS
-#ifdef DNSServer_h
 		DNSServer dnsServer;
 		static void DnsHandling(void *);
-#endif
-#endif
 		WebServer web;
 #endif
 

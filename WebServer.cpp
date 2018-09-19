@@ -19,11 +19,7 @@ WebServer::WebServer()
 	, server(80)
 {
 	server.addHandler(&events);
-#ifdef BASECAMP_USEDNS
-#ifdef DNSServer_h
 	server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
-#endif
-#endif
 }
 
 void WebServer::begin(Configuration &configuration, std::function<void()> submitFunc) {
@@ -214,9 +210,5 @@ void WebServer::reset() {
 	// It works without reset, if you only configure one server after a reboot. Not sure what happens if you want to reconfigure during runtime.
 	//server.reset();
 	//server.addHandler(&events);
-//#ifdef BASECAMP_USEDNS
-//#ifdef DNSServer_h
 	//server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
-//#endif
-//#endif
 }
