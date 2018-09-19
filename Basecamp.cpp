@@ -16,8 +16,7 @@ namespace {
 }
 
 Basecamp::Basecamp(SetupModeWifiEncryption setupModeWifiEncryption, ConfigurationUI configurationUi)
-	: MqttGuardInterface(mqtt)
-	, configuration(String{"/basecamp.json"})
+	: configuration(String{"/basecamp.json"})
 	, setupModeWifiEncryption_(setupModeWifiEncryption)
 	, configurationUi_(configurationUi)
 {
@@ -99,7 +98,7 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 	};
 
 	// Get a cleaned version of the device name.
-	// It is used as a hostname for DHCP and ArduinoOTA.
+	// It is used as a hostname for DHCP.
 	hostname = _cleanHostname();
 	DEBUG_PRINTLN(hostname);
 
@@ -140,84 +139,6 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 	// Get WiFi MAC
 	mac = wifi.getSoftwareMacAddress(":");
 #endif
-#ifndef BASECAMP_NOMQTT
-	// Check if MQTT has been disabled by the user
-	if (configuration.get("MQTTActive") != "false") {
-		// Setting up variables for the MQTT client. This is necessary due to
-		// the nature of the library. It won't work properly with Arduino Strings.
-		const auto &mqtthost = configuration.get("MQTTHost");
-		const auto &mqttuser = configuration.get("MQTTUser");
-		const auto &mqttpass = configuration.get("MQTTPass");
-		// INFO: that library just copies the pointer to the hostname. As long as nobody
-		// modifies the config, this may work.
-		mqtt.setClientId(hostname.c_str());
-		auto mqttport = configuration.get("MQTTPort").toInt();
-		if (mqttport == 0) mqttport = 1883;
-		// INFO: that library just copies the pointer to the hostname. As long as nobody
-		// modifies the config, this may work.
-		// Define the hostname and port of the MQTT broker.
-		mqtt.setServer(mqtthost.c_str(), mqttport);
-		// If MQTT credentials are stored, set them.
-		if (mqttuser.length() != 0) {
-			mqtt.setCredentials(mqttuser.c_str(), mqttpass.c_str());
-		};
-		// Start a task that manages the (re)connection of the MQTT client
-		// It's pinned to the same core (0) as FreeRTOS so the Arduino code inside setup()
-		// and loop() will not be interrupted, as they are pinned to core 1.
-		xTaskCreatePinnedToCore(&MqttHandling, "MqttTask", defaultThreadStackSize,
-				(void *)&mqtt, defaultThreadPriority, NULL, 0);
-	};
-#endif
-
-#ifndef BASECAMP_NOOTA
-	// Set up Over-the-Air-Updates (OTA) if it hasn't been disabled.
-	if(configuration.get("OTAActive") != "false") {
-
-		// Set OTA password
-		String otaPass = configuration.get("OTAPass");
-		if (otaPass.length() != 0) {
-			ArduinoOTA.setPassword(otaPass.c_str());
-		}
-
-		// Set OTA hostname
-		ArduinoOTA.setHostname(hostname.c_str());
-
-		// The following code is copied verbatim from the ESP32 BasicOTA.ino example
-		// This is the callback for the beginning of the OTA process
-		ArduinoOTA
-			.onStart([]() {
-					String type;
-					if (ArduinoOTA.getCommand() == U_FLASH)
-					type = "sketch";
-					else // U_SPIFFS
-					type = "filesystem";
-					SPIFFS.end();
-
-					Serial.println("Start updating " + type);
-					})
-		// When the update ends print it to serial
-		.onEnd([]() {
-				Serial.println("\nEnd");
-				})
-		// Show the progress of the update
-		.onProgress([](unsigned int progress, unsigned int total) {
-				Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-				})
-		// Error handling for the update
-		.onError([](ota_error_t error) {
-				Serial.printf("Error[%u]: ", error);
-				if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-				else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-				else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-				else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-				else if (error == OTA_END_ERROR) Serial.println("End Failed");
-				});
-
-		// Start the OTA service
-		ArduinoOTA.begin();
-
-	}
-#endif
 
 #ifndef BASECAMP_NOWEB
 	if (shouldEnableConfigWebserver())
@@ -252,17 +173,6 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 		web.setInterfaceElementAttribute("WifiConfigured", "type", "hidden");
 		web.setInterfaceElementAttribute("WifiConfigured", "value", "true");
 
-		// Add input fields for MQTT configurations if it hasn't been disabled
-		if (configuration.get("MQTTActive") != "false") {
-			web.addInterfaceElement("MQTTHost", "input", "MQTT Host:","#configform" , "MQTTHost");
-			web.addInterfaceElement("MQTTPort", "input", "MQTT Port:","#configform" , "MQTTPort");
-			web.setInterfaceElementAttribute("MQTTPort", "type", "number");
-			web.setInterfaceElementAttribute("MQTTPort", "min", "0");
-			web.setInterfaceElementAttribute("MQTTPort", "max", "65535");
-			web.addInterfaceElement("MQTTUser", "input", "MQTT Username:","#configform" , "MQTTUser");
-			web.addInterfaceElement("MQTTPass", "input", "MQTT Password:","#configform" , "MQTTPass");
-			web.setInterfaceElementAttribute("MQTTPass", "type", "password");
-		}
 		// Add a save button that calls the JavaScript function collectConfiguration() on click
 		web.addInterfaceElement("saveform", "input", " ","#configform");
 		web.setInterfaceElementAttribute("saveform", "type", "button");
@@ -304,52 +214,14 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
  */
 void Basecamp::handle (void)
 {
-	#ifndef BASECAMP_NOOTA
-		// This call takes care of the ArduinoOTA function provided by Basecamp
-		ArduinoOTA.handle();
-	#endif
 }
-
-
-#ifndef BASECAMP_NOMQTT
 
 bool Basecamp::shouldEnableConfigWebserver() const
 {
 	return (configurationUi_ == ConfigurationUI::always ||
-	   (configurationUi_ == ConfigurationUI::accessPoint && wifi.getOperationMode() == WifiControl::Mode::accessPoint));
+		(configurationUi_ == ConfigurationUI::accessPoint && wifi.getOperationMode() == WifiControl::Mode::accessPoint));
 }
 
-//This is a task that checks if the MQTT client is still connected or not. If not it automatically reconnect.
-// TODO: Think about making void* the real corresponding type
-void Basecamp::MqttHandling(void *mqttPointer)
-{
-		// is set to true, when a connection attempt is already running. Parallel connection attempts
-		// seem to mess up the async-mqtt-client library.
-		bool mqttIsConnecting = false;
-		AsyncMqttClient *mqtt = (AsyncMqttClient *)mqttPointer;
-		while(1) {
-			// TODO: What is the sense behind these magics?
-			// If the MQTT client is not connected force a disconnect.
-			if (mqtt->connected() != 1) {
-				mqttIsConnecting = false;
-				mqtt->disconnect(true);
-			}
-			// If the MQTT client is not connecting, not already connected and the WiFi has a
-			// connection, try to connect
-			if (!mqttIsConnecting) {
-				if(mqtt->connected() != 1) {
-					if (WiFi.status() == WL_CONNECTED) {
-						mqtt->connect();
-						mqttIsConnecting = true;
-					} else {
-						mqtt->disconnect();
-					}
-				}
-			}
-			vTaskDelay(100);
-		}
-};
-#endif
 
 #ifdef BASECAMP_USEDNS
 #ifdef DNSServer_h

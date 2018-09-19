@@ -28,7 +28,7 @@ WebServer::WebServer()
 
 void WebServer::begin(Configuration &configuration, std::function<void()> submitFunc) {
 	SPIFFS.begin();
-	
+
 	server.on("/" , HTTP_GET, [](AsyncWebServerRequest * request)
 	{
 			AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_htm_gz, index_htm_gz_len);
@@ -131,7 +131,7 @@ void WebServer::begin(Configuration &configuration, std::function<void()> submit
 #endif
 			request->send(404);
 	});
-	
+
 	server.begin();
 }
 

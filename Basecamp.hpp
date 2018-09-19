@@ -23,19 +23,7 @@
 #include "WebServer.hpp"
 #endif
 
-#ifndef BASECAMP_NOMQTT
-#include <AsyncMqttClient.h>
-#include "mqttGuardInterface.hpp"
-#endif
-
-#ifndef BASECAMP_NOOTA
-#include <ArduinoOTA.h>
-#endif
-
 class Basecamp
-#ifndef BASECAMP_NOMQTT
- : public MqttGuardInterface
-#endif
 {
 	public:
 		// How to handle encryption in setup mode (AP mode)
@@ -79,11 +67,6 @@ class Basecamp
 #ifndef BASECAMP_NOWIFI
 		String mac;
 		WifiControl wifi;
-#endif
-
-#ifndef BASECAMP_NOMQTT
-		AsyncMqttClient mqtt;
-		static void MqttHandling(void *);
 #endif
 
 #ifndef BASECAMP_NOWEB
