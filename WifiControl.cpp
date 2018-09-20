@@ -12,7 +12,7 @@ namespace {
 }
 
 void WifiControl::begin(String essid, String password, String configured,
-												String hostname, String apSecret)
+												int pixelTubeNumber, String hostname, String apSecret)
 {
 	DEBUG_PRINTLN("Connecting to Wifi");
 
@@ -22,7 +22,9 @@ void WifiControl::begin(String essid, String password, String configured,
 	_wifiAPName = "PixelTube_" + getHardwareMacAddress();
 
 	Preferences preferences;
-	preferences.begin("basecamp", true);
+	preferences.begin("basecamp", false);
+	preferences.putInt("pixelTubeNumber", pixelTubeNumber);
+	preferences.end();
 
 	WiFi.onEvent(WiFiEvent);
 	if (_wifiConfigured == "True") {
@@ -30,20 +32,7 @@ void WifiControl::begin(String essid, String password, String configured,
 		DEBUG_PRINTLN("Wifi is configured");
 		DEBUG_PRINTF("Connecting to %s\n", _wifiEssid.c_str());
 
-		IPAddress ip = IPAddress();
-		IPAddress gatewayIp = IPAddress();
-		IPAddress subnetMask = IPAddress();
-
-		if (ip.fromString(preferences.getString("ipaddress", "")) &&
-			gatewayIp.fromString(preferences.getString("gatewayIp", "")) &&
-			subnetMask.fromString(preferences.getString("subnetMask", ""))) {
-
-			DEBUG_PRINTF("Requesting static IP %s\n", ip.toString().c_str());
-			DEBUG_PRINTF("Gateway IP %s\n", gatewayIp.toString().c_str());
-			DEBUG_PRINTF("Subnet mask %s\n", subnetMask.toString().c_str());
-
-			WiFi.config(ip, gatewayIp, subnetMask);
-		}
+		requestStaticIp();
 
 		WiFi.begin(_wifiEssid.c_str(), _wifiPassword.c_str());
 		WiFi.setHostname(hostname.c_str());
@@ -86,6 +75,31 @@ String WifiControl::getAPName() {
 	return _wifiAPName;
 }
 
+void WifiControl::requestStaticIp() {
+	Preferences preferences;
+	preferences.begin("basecamp", true);
+
+	IPAddress ip = IPAddress();
+	IPAddress gatewayIp = IPAddress();
+	IPAddress subnetMask = IPAddress();
+
+	if (ip.fromString(preferences.getString("ipaddress", "")) &&
+		gatewayIp.fromString(preferences.getString("gatewayIp", "")) &&
+		subnetMask.fromString(preferences.getString("subnetMask", ""))) {
+
+		int pixelTubeNumber = preferences.getInt("pixelTubeNumber", 0);
+		if (pixelTubeNumber > 0 && pixelTubeNumber < 100) {
+			ip[3] = pixelTubeNumber + 100;
+		}
+
+		DEBUG_PRINTF("Requesting static IP %s\n", ip.toString().c_str());
+		DEBUG_PRINTF("Gateway IP %s\n", gatewayIp.toString().c_str());
+		DEBUG_PRINTF("Subnet mask %s\n", subnetMask.toString().c_str());
+
+		WiFi.config(ip, gatewayIp, subnetMask);
+	}
+}
+
 void WifiControl::WiFiEvent(WiFiEvent_t event)
 {
 	Preferences preferences;
@@ -101,6 +115,9 @@ void WifiControl::WiFiEvent(WiFiEvent_t event)
 
 	switch(event) {
 		case SYSTEM_EVENT_STA_GOT_IP:
+			// reset bootcounter
+			preferences.putUInt("bootcounter", 0);
+
 			ip = WiFi.localIP().toString();
 			gatewayIp = WiFi.gatewayIP().toString();
 			subnetMask = WiFi.subnetMask().toString();
@@ -109,11 +126,18 @@ void WifiControl::WiFiEvent(WiFiEvent_t event)
 			DEBUG_PRINTF("Wifi gateway IP address: %s\n", gatewayIp.c_str());
 			DEBUG_PRINTF("Wifi subnet mask: %s\n", subnetMask.c_str());
 
-			preferences.putString("ipaddress", ip);
-			preferences.putString("gatewayIp", gatewayIp);
-			preferences.putString("subnetMask", subnetMask);
+			// this is the first time we got an IP address
+			// so we must request a static IP in the same address range
+			if (preferences.getString("ipaddress", "") == "") {
+				preferences.putString("ipaddress", ip);
+				preferences.putString("gatewayIp", gatewayIp);
+				preferences.putString("subnetMask", subnetMask);
+				preferences.end();
 
-			preferences.putUInt("bootcounter", 0);
+				requestStaticIp();
+				return;
+			}
+
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			DEBUG_PRINTLN("WiFi lost connection");

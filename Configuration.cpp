@@ -29,12 +29,12 @@ void Configuration::setFileName(const String& filename) {
 
 bool Configuration::load() {
 	DEBUG_PRINTLN("Loading config file ");
-	
+
 	if (_memOnlyConfig) {
 		DEBUG_PRINTLN("Memory-only configuration: Nothing loaded!");
 		return false;
 	}
-	
+
 	DEBUG_PRINTLN(_jsonFile);
 	if (!SPIFFS.begin(true)) {
 		Serial.println("Could not access SPIFFS.");
@@ -66,7 +66,7 @@ bool Configuration::load() {
 
 bool Configuration::save() {
 	DEBUG_PRINTLN("Saving config file");
-	
+
 	if (_memOnlyConfig) {
 		DEBUG_PRINTLN("Memory-only configuration: Nothing saved!");
 		return false;
@@ -102,7 +102,7 @@ bool Configuration::save() {
 
 void Configuration::set(String key, String value) {
 	std::ostringstream debug;
-	debug << "Settting " << key.c_str() << " to " << value.c_str() << "(was " << get(key).c_str() << ")";
+	debug << "Settting " << key.c_str() << " to '" << value.c_str() << "' (was '" << get(key).c_str() << "')";
 	DEBUG_PRINTLN(debug.str().c_str());
 
 	if (get(key) != value) {

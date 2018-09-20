@@ -3,9 +3,9 @@ html {
 	line-height: 1.5;
 }
 
-@media (min-device-width: 400px) {
-	#wrapper, footer {
-		width:80%;
+@media (min-width: 400px) {
+	body > * {
+		width: 80%;
 		max-width: 1000px;
 		margin: 0 auto;
 	}
@@ -30,6 +30,7 @@ label {
 }
 
 footer {
+	margin-top: 2em;
 	font-size: .8em;
 }
 
@@ -77,6 +78,7 @@ input[type=button]:hover, input[type=submit]:hover, button, a.button:hover {
 #configform {
 	display:flex;
 	flex-wrap: wrap;
+	margin-bottom: 3em;
 }
 
 #configform > * {

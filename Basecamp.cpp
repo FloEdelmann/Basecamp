@@ -127,11 +127,14 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 
 	DEBUG_PRINTF("Secret: %s\n", configuration.get(ConfigurationKey::accessPointSecret).c_str());
 
+	int pixelTubeNumber = configuration.get("pixelTubeNumber").toInt();
+
 	// Initialize Wifi with the stored configuration data.
 	wifi.begin(
 			configuration.get("WifiEssid"), // The (E)SSID or WiFi-Name
 			configuration.get("WifiPassword"), // The WiFi password
 			configuration.get("WifiConfigured"), // Has the WiFi been configured
+			pixelTubeNumber,
 			hostname, // The system hostname to use for DHCP
 			(setupModeWifiEncryption_ == SetupModeWifiEncryption::none)?"":configuration.get(ConfigurationKey::accessPointSecret)
 	);
@@ -143,51 +146,38 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 #ifndef BASECAMP_NOWEB
 	if (shouldEnableConfigWebserver())
 	{
-		// Add a webinterface element for the h1 that contains the device name. It is a child of the #wrapper-element.
-		web.addInterfaceElement("heading", "h1", "","#wrapper");
-		web.setInterfaceElementAttribute("heading", "class", "fat-border");
-		web.addInterfaceElement("logo", "img", "", "#heading");
-		web.setInterfaceElementAttribute("logo", "src", "/logo.svg");
-		String DeviceName = configuration.get("DeviceName");
-		if (DeviceName == "") {
-			DeviceName = "Unconfigured Basecamp Device";
-		}
-		web.addInterfaceElement("title", "title", DeviceName,"head");
-		web.addInterfaceElement("devicename", "span", DeviceName,"#heading");
-		// Set the class attribute of the element to fat-border.
-		web.setInterfaceElementAttribute("heading", "class", "fat-border");
-		// Add a paragraph with some basic information
-		web.addInterfaceElement("infotext1", "p", "Configure your device with the following options:","#wrapper");
+		String pixelTubeNumber = configuration.get("pixelTubeNumber");
+		String deviceName = (pixelTubeNumber == "") ? "Unconfigured Pixel Tube" : "Pixel Tube " + pixelTubeNumber;
+		web.addInterfaceElement("title", "title", deviceName, "head");
+		web.addInterfaceElement("devicename", "span", deviceName, "#heading");
 
-		// Add the configuration form, that will include all inputs for config data
-		web.addInterfaceElement("configform", "form", "","#wrapper");
+		web.addInterfaceElement("configform", "form", "", "#wrapper");
 		web.setInterfaceElementAttribute("configform", "action", "#");
 		web.setInterfaceElementAttribute("configform", "onsubmit", "collectConfiguration()");
 
-		web.addInterfaceElement("DeviceName", "input", "Device name","#configform" , "DeviceName");
+		web.addInterfaceElement("pixelTubeNumber", "input", "Pixel Tube number (1 to 99):", "#configform", "pixelTubeNumber");
+		web.setInterfaceElementAttribute("pixelTubeNumber", "type", "number");
+		web.setInterfaceElementAttribute("pixelTubeNumber", "min", "1");
+		web.setInterfaceElementAttribute("pixelTubeNumber", "max", "99");
+		web.setInterfaceElementAttribute("pixelTubeNumber", "step", "1");
 
-		// Add an input field for the WIFI data and link it to the corresponding configuration data
-		web.addInterfaceElement("WifiEssid", "input", "WIFI SSID:","#configform" , "WifiEssid");
+		web.addInterfaceElement("WifiEssid", "input", "WIFI SSID:", "#configform", "WifiEssid");
+
 		web.addInterfaceElement("WifiPassword", "input", "WIFI Password:", "#configform", "WifiPassword");
 		web.setInterfaceElementAttribute("WifiPassword", "type", "password");
+
 		web.addInterfaceElement("WifiConfigured", "input", "", "#configform", "WifiConfigured");
 		web.setInterfaceElementAttribute("WifiConfigured", "type", "hidden");
 		web.setInterfaceElementAttribute("WifiConfigured", "value", "true");
 
-		// Add a save button that calls the JavaScript function collectConfiguration() on click
-		web.addInterfaceElement("saveform", "button", "Save","#configform");
+		web.addInterfaceElement("saveform", "button", "Save", "#configform");
 		web.setInterfaceElementAttribute("saveform", "type", "submit");
 
-		// Show the devices MAC in the Webinterface
-		String infotext2 = "This device has the MAC-Address: " + mac;
-		web.addInterfaceElement("infotext2", "p", infotext2,"#wrapper");
+		String macAddressHint = "This device has MAC-Address " + mac + ".";
+		web.addInterfaceElement("macAddressHint", "p", macAddressHint, "#wrapper");
 
-		web.addInterfaceElement("footer", "footer", "Powered by ", "body");
-		web.addInterfaceElement("footerlink", "a", "Basecamp", "footer");
-		web.setInterfaceElementAttribute("footerlink", "href", "https://github.com/merlinschumacher/Basecamp");
-		web.setInterfaceElementAttribute("footerlink", "target", "_blank");
 
-		if(configuration.get("WifiConfigured") != "True"){
+		if (configuration.get("WifiConfigured") != "True") {
 			dnsServer.start(53, "*", wifi.getSoftAPIP());
 			xTaskCreatePinnedToCore(&DnsHandling, "DNSTask", 4096, (void*) &dnsServer, 5, NULL,0);
 		}

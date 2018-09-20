@@ -29,7 +29,8 @@ class WifiControl {
 		Mode getOperationMode() const;
 
 		void begin(String essid, String password = "", String configured = "False",
-							 String hostname = "BasecampDevice", String apSecret="");
+							 int pixelTubeNumber = 0, String hostname = "BasecampDevice",
+							 String apSecret="");
 		IPAddress getIP();
 		IPAddress getSoftAPIP();
 		String getAPName();
@@ -51,6 +52,8 @@ class WifiControl {
 		String _wifiPassword;
 		String _ap;
 		String _wifiAPName;
+
+		static void requestStaticIp();
 
 		Mode operationMode_ = Mode::unconfigured;
 };

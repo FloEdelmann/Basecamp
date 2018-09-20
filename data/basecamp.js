@@ -55,9 +55,10 @@ function addElementToDom (elementType, elementID, elementContent) {
 	if (elementID) element.setAttribute("id", elementID);
 
 	setAttributes(element, elementAttributes);
-	var parent = document.querySelector(parentSelector);
-	if(!parent) parent = document.querySelector("#wrapper");
-	parent.appendChild(element);
+
+	if (!element.parentElement) {
+		document.querySelector(parentSelector || "#wrapper").appendChild(element);
+	}
 }
 
 function setAttributes(el, attrs) {
