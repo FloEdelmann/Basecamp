@@ -138,9 +138,19 @@ void WifiControl::WiFiEvent(WiFiEvent_t event)
 				return;
 			}
 
+			if (onConnectCallback) {
+				onConnectCallback();
+			}
+
 			break;
+		case SYSTEM_EVENT_STA_LOST_IP:
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			DEBUG_PRINTLN("WiFi lost connection");
+
+			if (onDisconnectCallback) {
+				onDisconnectCallback();
+			}
+
 			WiFi.reconnect();
 			break;
 		default:
@@ -150,6 +160,9 @@ void WifiControl::WiFiEvent(WiFiEvent_t event)
 
 	preferences.end();
 }
+
+WifiControl::THandlerFunction WifiControl::onConnectCallback;
+WifiControl::THandlerFunction WifiControl::onDisconnectCallback;
 
 namespace {
 	template <typename BYTES>

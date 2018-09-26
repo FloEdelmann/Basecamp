@@ -10,12 +10,15 @@
 #include "debug.hpp"
 #include <iomanip>
 #include <sstream>
+#include <functional>
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <Preferences.h>
 
 class WifiControl {
 	public:
+		typedef std::function<void(void)> THandlerFunction;
+
 		enum class Mode {
 			unconfigured,
 			accessPoint,
@@ -36,6 +39,9 @@ class WifiControl {
 		String getAPName();
 		int status();
 		static void WiFiEvent(WiFiEvent_t event);
+
+		static THandlerFunction onConnectCallback;
+		static THandlerFunction onDisconnectCallback;
 
 		unsigned getMinimumSecretLength() const;
 		String generateRandomSecret(unsigned length) const;
