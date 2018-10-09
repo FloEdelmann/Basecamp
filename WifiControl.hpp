@@ -36,6 +36,7 @@ class WifiControl {
 							 String apSecret="");
 		IPAddress getIP();
 		IPAddress getSoftAPIP();
+		IPAddress subnetMask();
 		String getAPName();
 		int status();
 		static void WiFiEvent(WiFiEvent_t event);

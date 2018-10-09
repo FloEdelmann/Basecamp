@@ -60,6 +60,7 @@ class Basecamp
 		String getSetupModeWifiName();
 		String getSetupModeWifiSecret();
 		String hostname;
+		int pixelTubeNumber;
 
 #ifndef BASECAMP_NOWIFI
 		String mac;

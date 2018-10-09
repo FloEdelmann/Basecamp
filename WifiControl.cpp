@@ -70,6 +70,9 @@ IPAddress WifiControl::getIP() {
 IPAddress WifiControl::getSoftAPIP() {
 	return WiFi.softAPIP();
 }
+IPAddress WifiControl::subnetMask() {
+	return WiFi.subnetMask();
+}
 
 String WifiControl::getAPName() {
 	return _wifiAPName;

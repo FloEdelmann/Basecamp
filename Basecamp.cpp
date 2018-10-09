@@ -27,26 +27,14 @@ Basecamp::Basecamp(SetupModeWifiEncryption setupModeWifiEncryption, Configuratio
  */
 String Basecamp::_cleanHostname()
 {
-	String clean_hostname =	configuration.get("DeviceName"); // Get device name from configuration
+	String pixelTubeNumber = configuration.get("pixelTubeNumber");
 
 	// If hostname is not set, return default
-	if (clean_hostname == "") {
-		return "basecamp-device";
+	if (pixelTubeNumber == "") {
+		return "pixel-tube-unconfigured";
 	}
 
-	// Transform device name to lower case
-	clean_hostname.toLowerCase();
-
-	// Replace all non-alphanumeric characters in hostname to minus symbols
-	for (int i = 0; i <= clean_hostname.length(); i++) {
-		if (!isalnum(clean_hostname.charAt(i))) {
-			clean_hostname.setCharAt(i,'-');
-		};
-	};
-	DEBUG_PRINTLN(clean_hostname);
-
-	// return cleaned hostname String
-	return clean_hostname;
+	return "pixel-tube-" + pixelTubeNumber;
 };
 
 /**
@@ -127,7 +115,7 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 
 	DEBUG_PRINTF("Secret: %s\n", configuration.get(ConfigurationKey::accessPointSecret).c_str());
 
-	int pixelTubeNumber = configuration.get("pixelTubeNumber").toInt();
+	pixelTubeNumber = configuration.get("pixelTubeNumber").toInt();
 
 	// Initialize Wifi with the stored configuration data.
 	wifi.begin(
@@ -146,8 +134,7 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 #ifndef BASECAMP_NOWEB
 	if (shouldEnableConfigWebserver())
 	{
-		String pixelTubeNumber = configuration.get("pixelTubeNumber");
-		String deviceName = (pixelTubeNumber == "") ? "Unconfigured Pixel Tube" : "Pixel Tube " + pixelTubeNumber;
+		String deviceName = (pixelTubeNumber == 0) ? "Unconfigured Pixel Tube" : "Pixel Tube " + String(pixelTubeNumber);
 		web.addInterfaceElement("title", "title", deviceName, "head");
 		web.addInterfaceElement("devicename", "span", deviceName, "#heading");
 
