@@ -116,6 +116,8 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 	DEBUG_PRINTF("Secret: %s\n", configuration.get(ConfigurationKey::accessPointSecret).c_str());
 
 	pixelTubeNumber = configuration.get("pixelTubeNumber").toInt();
+	artNetUniverse = configuration.get("artNetUniverse").toInt();
+	artNetStartAddress = configuration.get("artNetStartAddress").toInt();
 
 	// Initialize Wifi with the stored configuration data.
 	wifi.begin(
@@ -147,6 +149,18 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 		web.setInterfaceElementAttribute("pixelTubeNumber", "min", "1");
 		web.setInterfaceElementAttribute("pixelTubeNumber", "max", "99");
 		web.setInterfaceElementAttribute("pixelTubeNumber", "step", "1");
+
+		web.addInterfaceElement("artNetUniverse", "input", "Art-Net Universe (0 to 32767):", "#configform", "artNetUniverse");
+		web.setInterfaceElementAttribute("artNetUniverse", "type", "number");
+		web.setInterfaceElementAttribute("artNetUniverse", "min", "0");
+		web.setInterfaceElementAttribute("artNetUniverse", "max", "32767");
+		web.setInterfaceElementAttribute("artNetUniverse", "step", "1");
+
+		web.addInterfaceElement("artNetStartAddress", "input", "Art-Net Start Address (1 to 387, one pixel tube occupies 125 channels):", "#configform", "artNetStartAddress");
+		web.setInterfaceElementAttribute("artNetStartAddress", "type", "number");
+		web.setInterfaceElementAttribute("artNetStartAddress", "min", "1");
+		web.setInterfaceElementAttribute("artNetStartAddress", "max", "387");
+		web.setInterfaceElementAttribute("artNetStartAddress", "step", "1");
 
 		web.addInterfaceElement("WifiEssid", "input", "WIFI SSID:", "#configform", "WifiEssid");
 

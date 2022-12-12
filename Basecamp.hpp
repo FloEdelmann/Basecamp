@@ -62,6 +62,9 @@ class Basecamp
 		String hostname;
 		int pixelTubeNumber;
 
+		int artNetUniverse;
+		int artNetStartAddress;
+
 #ifndef BASECAMP_NOWIFI
 		String mac;
 		WifiControl wifi;
